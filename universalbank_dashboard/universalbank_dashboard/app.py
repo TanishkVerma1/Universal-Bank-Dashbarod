@@ -6,24 +6,30 @@ import plotly.graph_objects as go
 from pathlib import Path
 
 
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-from sklearn.pipeline import Pipeline
-from sklearn.cluster import KMeans
+# --- ML imports (safe for Streamlit Cloud) ---
+try:
+    from sklearn.model_selection import train_test_split
+    from sklearn.preprocessing import StandardScaler
+    from sklearn.pipeline import Pipeline
+    from sklearn.cluster import KMeans
 
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+    from sklearn.neighbors import KNeighborsClassifier
+    from sklearn.tree import DecisionTreeClassifier
+    from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 
-from sklearn.metrics import (
-    accuracy_score,
-    confusion_matrix,
-    precision_score,
-    recall_score,
-    f1_score,
-    roc_curve,
-    roc_auc_score,
-)
+    from sklearn.metrics import (
+        accuracy_score,
+        confusion_matrix,
+        precision_score,
+        recall_score,
+        f1_score,
+        roc_curve,
+        roc_auc_score,
+    )
+    SKLEARN_OK = True
+except ModuleNotFoundError:
+    SKLEARN_OK = False
+
 
 
 st.set_page_config(page_title="UniversalBank - Personal Loan Dashboard", layout="wide")
@@ -151,6 +157,14 @@ if COL_TARGET in dff.columns:
 
 st.sidebar.markdown("---")
 page = st.sidebar.radio("Pages", ["📊 EDA Dashboard", "🧠 Segmentation (K-Means)", "🤖 Classification Models"], index=0)
+
+if page in ["🧠 Segmentation (K-Means)", "🤖 Classification Models"] and not SKLEARN_OK:
+    st.error(
+        "scikit-learn is not installed in this environment.\n\n"
+        "✅ Fix: add `scikit-learn` to your requirements.txt and redeploy."
+    )
+    st.stop()
+
 
 if page == "📊 EDA Dashboard":
 
@@ -610,6 +624,11 @@ if page == "🧠 Segmentation (K-Means)":
     f1, f2, f3 = cluster_features[:3]
     X_plot = Xc[[f1, f2, f3]].copy()
     X_plot["cluster"] = labels_k
+    
+    # add loan label for hover (from original dff aligned by index)
+    if COL_TARGET in dff.columns:
+        X_plot["Personal Loan"] = dff.loc[X_plot.index, COL_TARGET].map({0: "No", 1: "Yes"})
+
 
     # Centroids in original scale (for all features), then slice to 3D
     centers_scaled = km.cluster_centers_
