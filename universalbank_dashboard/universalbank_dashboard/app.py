@@ -746,12 +746,12 @@ if page == "🤖 Classification Models":
 
     # Remove ZIP because high-cardinality noise; also remove target itself
     X = dff[model_cols].copy()
-    y = dff[COL_TARGET].astype(int).copy()  # 1 = Yes, 0 = No
-
-    # drop missing rows
-    m = pd.concat([X, y], axis=1).dropna()
+    y = dff[COL_TARGET].astype(int).copy()
+    
+    m = X.join(y.rename("target")).dropna()
     X = m[model_cols]
-    y = m[COL_TARGET]
+    y = m["target"]
+
 
     st.subheader("Dataset Used For Modeling")
     st.write(f"Rows after filtering + dropping missing: **{len(X):,}** | Features used: **{len(model_cols)}**")
@@ -851,7 +851,9 @@ if page == "🤖 Classification Models":
 
     def plot_cm(cm, title):
         cm = cm.astype(float)
-        z = cm / cm.sum() * 100 if mode == "Percentages" else cm
+        row_sums = cm.sum(axis=1, keepdims=True)
+        row_sums[row_sums == 0] = 1
+        z = (cm / row_sums) * 100 if mode == "Percentages" else cm
         txt = np.round(z, 1).astype(str) + "%" if mode == "Percentages" else cm.astype(int).astype(str)
 
         fig = go.Figure(data=go.Heatmap(
