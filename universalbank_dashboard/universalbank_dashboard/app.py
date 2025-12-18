@@ -643,8 +643,9 @@ if page == "🧠 Segmentation (K-Means)":
         color="cluster",
         opacity=0.75,
         title=f"K-Means Clusters (K={k_choice}) — Features: {f1}, {f2}, {f3}",
-        hover_data=[COL_TARGET] if COL_TARGET in Xc.columns else None
+        hover_data=["Personal Loan"] if "Personal Loan" in X_plot.columns else None
     )
+
 
     # Add centroids
     fig3.add_trace(go.Scatter3d(
